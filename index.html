@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Akshar Stationary and General Store</title>
+<title>Shop Website</title>
 <style>
 body{font-family:Arial,sans-serif;margin:0;padding:0;background:#fdfdfd;color:#333}
 header{background:#4a90e2;color:white;padding:20px;text-align:center}
@@ -20,7 +20,7 @@ button:hover{background:#1ebe57}
 .about,.contact{margin:30px 0}
 footer{background:#4a90e2;color:white;text-align:center;padding:15px;margin-top:30px}
 .admin-panel{display:none;background:#eee;padding:15px;border-radius:10px;margin-bottom:20px}
-.admin-panel input{margin:5px 0;padding:5px;width:calc(100% - 12px)}
+.admin-panel input, .admin-panel textarea{margin:5px 0;padding:5px;width:calc(100% - 12px)}
 .admin-panel label{display:block;margin-top:10px;font-weight:bold}
 .admin-panel button{background:#4a90e2;margin-top:10px}
 .cart{border:1px solid #ddd;padding:15px;border-radius:10px;margin-top:20px;background:#f9f9f9}
@@ -52,7 +52,7 @@ footer{background:#4a90e2;color:white;text-align:center;padding:15px;margin-top:
 <section id="products">
 <h2>Our Products</h2>
 
-<!-- Password Input (Visible) -->
+<!-- Password Input -->
 <div id="passwordDiv">
 <label>Owner Login:</label>
 <input type="password" id="passwordInput" placeholder="Enter admin password">
@@ -61,14 +61,16 @@ footer{background:#4a90e2;color:white;text-align:center;padding:15px;margin-top:
 
 <!-- Admin Panel -->
 <div class="admin-panel" id="adminPanel">
-<h3>Owner Panel (Only you can see)</h3>
+<h3>Owner Panel</h3>
 <label>Product Name:</label>
-<input type="text" id="prodName" placeholder="Enter product name">
-<label>Price (₹):</label>
-<input type="number" id="prodPrice" placeholder="Enter price">
-<label>Upload Image (optional):</label>
-<input type="file" id="prodImage" accept="image/*">
+<input type="text" id="newName">
+<label>Price:</label>
+<input type="number" id="newPrice">
+<label>Image URL:</label>
+<input type="text" id="newImage">
 <button onclick="addProduct()">Add Product</button>
+<h4>Existing Products</h4>
+<div id="existingProducts"></div>
 </div>
 
 <!-- Products Display -->
@@ -101,130 +103,155 @@ footer{background:#4a90e2;color:white;text-align:center;padding:15px;margin-top:
 </footer>
 
 <script>
-// Admin password
-const adminPassword = "owner123"; 
-let defaultProducts = [];
+const adminPassword = "owner123"; // Change this password
+let products = [];
 let cart = [];
 
-// Load saved products from localStorage
-window.onload = function(){
-  const savedProducts = localStorage.getItem('products');
-  if(savedProducts){
-    defaultProducts = JSON.parse(savedProducts);
+// GitHub details
+const githubUsername = "YOUR_GITHUB_USERNAME";
+const repoName = "YOUR_REPO_NAME";
+const filePath = "products.json";
+const branch = "main";
+const token = "YOUR_PERSONAL_ACCESS_TOKEN";
+
+// Load products from GitHub
+async function loadProducts() {
+  try {
+    const res = await fetch(`https://raw.githubusercontent.com/${githubUsername}/${repoName}/${branch}/${filePath}`);
+    products = await res.json();
+    renderProducts();
+    if(document.getElementById('adminPanel').style.display==='block') renderAdminProducts();
+  } catch(e){
+    console.error("Cannot load products.json", e);
   }
-  renderProducts();
 }
 
-// Unlock admin panel from visible input
+// Unlock admin panel
 function unlockAdmin(){
   const pass = document.getElementById('passwordInput').value;
   if(pass === adminPassword){
     document.getElementById('adminPanel').style.display='block';
     document.getElementById('passwordDiv').style.display='none';
-    renderProducts();
-  } else {
-    alert("Incorrect password!");
-  }
+    renderAdminProducts();
+  } else alert("Incorrect password!");
 }
 
-// Render products
+// Render products for customers
 function renderProducts(){
   const container = document.getElementById('productList');
   container.innerHTML = '';
-  defaultProducts.forEach((p,i)=>{
+  products.forEach((p,i)=>{
     const div = document.createElement('div');
     div.className='product';
     div.innerHTML=`
-      <img src="${p.image?p.image:""}" alt="${p.name}">
+      <img src="${p.image?p.image:''}" alt="${p.name}">
       <h3>${p.name}</h3>
       <p>₹${p.price}</p>
       <button onclick="addToCart(${i})">Add to Cart</button>
-      ${document.getElementById('adminPanel').style.display==='block'?`<button onclick="removeProduct(${i})">Remove</button>`:""}
     `;
     container.appendChild(div);
   });
   renderCart();
 }
 
-// Add product (owner)
+// Render products for admin panel
+function renderAdminProducts(){
+  const container = document.getElementById('existingProducts');
+  container.innerHTML='';
+  products.forEach((p,i)=>{
+    const div=document.createElement('div');
+    div.innerHTML=`${p.name} - ₹${p.price} <button onclick="removeProduct(${i})">Remove</button>`;
+    container.appendChild(div);
+  });
+}
+
+// Add product via admin panel
 function addProduct(){
-  const name = document.getElementById('prodName').value;
-  const price = parseFloat(document.getElementById('prodPrice').value);
-  const fileInput = document.getElementById('prodImage');
-  if(!name || isNaN(price)){ alert("Enter valid name and price"); return; }
-
-  if(fileInput.files && fileInput.files[0]){
-    const reader = new FileReader();
-    reader.onload = function(e){
-      defaultProducts.push({name,price,image:e.target.result});
-      localStorage.setItem('products', JSON.stringify(defaultProducts)); // save to localStorage
-      renderProducts();
-    }
-    reader.readAsDataURL(fileInput.files[0]);
-  } else {
-    defaultProducts.push({name,price,image:""});
-    localStorage.setItem('products', JSON.stringify(defaultProducts)); // save to localStorage
-    renderProducts();
-  }
-
-  document.getElementById('prodName').value='';
-  document.getElementById('prodPrice').value='';
-  document.getElementById('prodImage').value='';
+  const name=document.getElementById('newName').value;
+  const price=Number(document.getElementById('newPrice').value);
+  const image=document.getElementById('newImage').value;
+  if(!name||!price) return alert("Name and price required");
+  products.push({name, price, image});
+  renderProducts();
+  renderAdminProducts();
+  updateGitHubJSON();
+  document.getElementById('newName').value='';
+  document.getElementById('newPrice').value='';
+  document.getElementById('newImage').value='';
 }
 
-// Remove product (owner)
+// Remove product
 function removeProduct(index){
-  if(confirm("Remove this product?")){
-    defaultProducts.splice(index,1);
-    localStorage.setItem('products', JSON.stringify(defaultProducts)); // update localStorage
-    renderProducts();
-  }
+  products.splice(index,1);
+  renderProducts();
+  renderAdminProducts();
+  updateGitHubJSON();
 }
 
-// Add to cart (customer)
-function addToCart(index){
-  cart.push(defaultProducts[index]);
-  renderCart();
-}
-
-// Render cart
+// Cart functions
+function addToCart(index){cart.push(products[index]); renderCart();}
 function renderCart(){
-  const cartDiv = document.getElementById('cartDiv');
-  const cartItems = document.getElementById('cartItems');
-  const cartTotal = document.getElementById('cartTotal');
-  if(cart.length === 0){ cartDiv.style.display='none'; return; }
+  const cartDiv=document.getElementById('cartDiv');
+  const cartItems=document.getElementById('cartItems');
+  const cartTotal=document.getElementById('cartTotal');
+  if(cart.length===0){cartDiv.style.display='none'; return;}
   cartDiv.style.display='block';
   cartItems.innerHTML='';
   let total=0;
   cart.forEach((p,i)=>{
     total+=p.price;
-    const div = document.createElement('div');
+    const div=document.createElement('div');
     div.className='cart-item';
     div.innerHTML=`${p.name} - ₹${p.price} <button onclick="removeFromCart(${i})">X</button>`;
     cartItems.appendChild(div);
   });
-  cartTotal.textContent = total;
+  cartTotal.textContent=total;
 }
-
-// Remove from cart
-function removeFromCart(index){
-  cart.splice(index,1);
-  renderCart();
-}
-
-// Place order via WhatsApp
+function removeFromCart(index){cart.splice(index,1); renderCart();}
 function placeOrder(){
-  if(cart.length===0){ alert("Cart is empty!"); return; }
+  if(cart.length===0){alert("Cart is empty!"); return;}
   let message="Hi, I want to order:\n";
   let total=0;
-  cart.forEach(p=>{
-    message+=`- ${p.name} (₹${p.price})\n`;
-    total+=p.price;
-  });
+  cart.forEach(p=>{message+=`- ${p.name} (₹${p.price})\n`; total+=p.price;});
   message+=`Total: ₹${total}`;
-  const url = `https://wa.me/919998083939?text=${encodeURIComponent(message)}`;
+  const url=`https://wa.me/919998083939?text=${encodeURIComponent(message)}`;
   window.open(url,'_blank');
 }
+
+// Update GitHub JSON
+async function updateGitHubJSON(){
+  const apiURL = `https://api.github.com/repos/${githubUsername}/${repoName}/contents/${filePath}`;
+  try {
+    // Get current SHA
+    const res = await fetch(apiURL, {
+      headers: { Authorization: `token ${token}` }
+    });
+    const data = await res.json();
+    const sha = data.sha;
+
+    // Update file
+    await fetch(apiURL, {
+      method: "PUT",
+      headers: {
+        Authorization: `token ${token}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        message: "Update products via admin panel",
+        content: btoa(JSON.stringify(products, null, 2)),
+        sha: sha,
+        branch: branch
+      })
+    });
+    alert("Products updated successfully!");
+  } catch(e){
+    console.error("Error updating GitHub", e);
+    alert("Failed to update products. Check token and repo.");
+  }
+}
+
+// Load products on page load
+window.onload=loadProducts;
 </script>
 </body>
 </html>
