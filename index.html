@@ -19,6 +19,18 @@ button{background:#25d366;color:white;border:none;padding:10px 15px;border-radiu
 button:hover{background:#1ebe57}
 .about,.contact{margin:30px 0}
 footer{background:#4a90e2;color:white;text-align:center;padding:15px;margin-top:30px}
+.admin-panel{display:none;background:#eee;padding:15px;border-radius:10px;margin-bottom:20px}
+.admin-panel input{margin:5px 0;padding:5px;width:calc(100% - 12px)}
+.admin-panel label{display:block;margin-top:10px;font-weight:bold}
+.admin-panel button{background:#4a90e2;margin-top:10px}
+.cart{border:1px solid #ddd;padding:15px;border-radius:10px;margin-top:20px;background:#f9f9f9}
+.cart h3{margin-top:0}
+.cart-item{display:flex;justify-content:space-between;margin-bottom:5px}
+.cart-item button{background:red;margin-left:10px}
+/* Password input box styling */
+#passwordDiv{background:#eee;padding:15px;border-radius:10px;margin-bottom:20px;max-width:400px;}
+#passwordDiv input{width:70%;padding:5px;}
+#passwordDiv button{padding:5px 10px;margin-left:5px;}
 </style>
 </head>
 <body>
@@ -40,7 +52,37 @@ footer{background:#4a90e2;color:white;text-align:center;padding:15px;margin-top:
 
 <section id="products">
 <h2>Our Products</h2>
+
+<!-- Password Input (Visible) -->
+<div id="passwordDiv">
+<label>Owner Login:</label>
+<input type="password" id="passwordInput" placeholder="Enter admin password">
+<button onclick="unlockAdmin()">Unlock</button>
+</div>
+
+<!-- Admin Panel -->
+<div class="admin-panel" id="adminPanel">
+<h3>Owner Panel (Only you can see)</h3>
+<label>Product Name:</label>
+<input type="text" id="prodName" placeholder="Enter product name">
+<label>Price (₹):</label>
+<input type="number" id="prodPrice" placeholder="Enter price">
+<label>Image URL (optional):</label>
+<input type="text" id="prodImage" placeholder="Enter image URL">
+<button onclick="addProduct()">Add Product</button>
+</div>
+
+<!-- Products Display -->
 <div class="products" id="productList"></div>
+
+<!-- Cart -->
+<div class="cart" id="cartDiv" style="display:none">
+<h3>Your Cart</h3>
+<div id="cartItems"></div>
+<p><strong>Total: ₹<span id="cartTotal">0</span></strong></p>
+<button onclick="placeOrder()">Place Order on WhatsApp</button>
+</div>
+
 </section>
 
 <section id="about" class="about">
@@ -60,31 +102,56 @@ footer{background:#4a90e2;color:white;text-align:center;padding:15px;margin-top:
 </footer>
 
 <script>
-// Set true for owner to enable Remove buttons
-let isOwner = true; 
+// Admin password
+const adminPassword = "owner123"; 
+let defaultProducts = [];
+let cart = [];
 
-// Empty array - owner adds products manually here
-let defaultProducts = [
-  // Example: {name:"Notebook", price:50, image:"image_url_here"}
-];
+// Unlock admin panel from visible input
+function unlockAdmin(){
+  const pass = document.getElementById('passwordInput').value;
+  if(pass === adminPassword){
+    document.getElementById('adminPanel').style.display='block';
+    document.getElementById('passwordDiv').style.display='none';
+    renderProducts();
+  } else {
+    alert("Incorrect password!");
+  }
+}
 
+// Render products
 function renderProducts(){
   const container = document.getElementById('productList');
   container.innerHTML = '';
   defaultProducts.forEach((p,i)=>{
-    const div=document.createElement('div');
+    const div = document.createElement('div');
     div.className='product';
     div.innerHTML=`
       <img src="${p.image?p.image:""}" alt="${p.name}">
       <h3>${p.name}</h3>
       <p>₹${p.price}</p>
-      ${isOwner?`<button onclick="removeProduct(${i})">Remove</button>`:""}
-      <button onclick="orderProduct('${p.name}',${p.price})">Order</button>
+      <button onclick="addToCart(${i})">Add to Cart</button>
+      ${document.getElementById('adminPanel').style.display==='block'?`<button onclick="removeProduct(${i})">Remove</button>`:""}
     `;
     container.appendChild(div);
   });
+  renderCart();
 }
 
+// Add product (owner)
+function addProduct(){
+  const name = document.getElementById('prodName').value;
+  const price = parseFloat(document.getElementById('prodPrice').value);
+  const image = document.getElementById('prodImage').value;
+  if(!name || isNaN(price)){ alert("Enter valid name and price"); return; }
+  defaultProducts.push({name,price,image});
+  document.getElementById('prodName').value='';
+  document.getElementById('prodPrice').value='';
+  document.getElementById('prodImage').value='';
+  renderProducts();
+}
+
+// Remove product (owner)
 function removeProduct(index){
   if(confirm("Remove this product?")){
     defaultProducts.splice(index,1);
@@ -92,13 +159,50 @@ function removeProduct(index){
   }
 }
 
-function orderProduct(name,price){
-  const message=encodeURIComponent(`Hi, I want to order ${name} (₹${price}) from Akshar Stationary and General Store`);
-  window.open(`https://wa.me/919998083939?text=${message}`,'_blank');
+// Add to cart (customer)
+function addToCart(index){
+  cart.push(defaultProducts[index]);
+  renderCart();
 }
 
-// Initial render
-window.onload = renderProducts;
+// Render cart
+function renderCart(){
+  const cartDiv = document.getElementById('cartDiv');
+  const cartItems = document.getElementById('cartItems');
+  const cartTotal = document.getElementById('cartTotal');
+  if(cart.length === 0){ cartDiv.style.display='none'; return; }
+  cartDiv.style.display='block';
+  cartItems.innerHTML='';
+  let total=0;
+  cart.forEach((p,i)=>{
+    total+=p.price;
+    const div = document.createElement('div');
+    div.className='cart-item';
+    div.innerHTML=`${p.name} - ₹${p.price} <button onclick="removeFromCart(${i})">X</button>`;
+    cartItems.appendChild(div);
+  });
+  cartTotal.textContent = total;
+}
+
+// Remove from cart
+function removeFromCart(index){
+  cart.splice(index,1);
+  renderCart();
+}
+
+// Place order via WhatsApp
+function placeOrder(){
+  if(cart.length===0){ alert("Cart is empty!"); return; }
+  let message="Hi, I want to order:\n";
+  let total=0;
+  cart.forEach(p=>{
+    message+=`- ${p.name} (₹${p.price})\n`;
+    total+=p.price;
+  });
+  message+=`Total: ₹${total}`;
+  const url = `https://wa.me/919998083939?text=${encodeURIComponent(message)}`;
+  window.open(url,'_blank');
+}
 </script>
 </body>
 </html>
