@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Shop Website</title>
+<title>Akshar Stationary and General Store</title>
 <style>
 body{font-family:Arial,sans-serif;margin:0;padding:0;background:#fdfdfd;color:#333}
 header{background:#4a90e2;color:white;padding:20px;text-align:center}
@@ -22,11 +22,11 @@ footer{background:#4a90e2;color:white;text-align:center;padding:15px;margin-top:
 .admin-panel{display:none;background:#eee;padding:15px;border-radius:10px;margin-bottom:20px}
 .admin-panel input, .admin-panel textarea{margin:5px 0;padding:5px;width:calc(100% - 12px)}
 .admin-panel label{display:block;margin-top:10px;font-weight:bold}
-.admin-panel button{background:#4a90e2;margin-top:10px}
+.admin-panel button{background:#4a90e2;margin-top:10px;color:white;}
 .cart{border:1px solid #ddd;padding:15px;border-radius:10px;margin-top:20px;background:#f9f9f9}
 .cart h3{margin-top:0}
 .cart-item{display:flex;justify-content:space-between;margin-bottom:5px}
-.cart-item button{background:red;margin-left:10px}
+.cart-item button{background:red;margin-left:10px;color:white;border:none;padding:2px 5px;border-radius:3px;cursor:pointer}
 #passwordDiv{background:#eee;padding:15px;border-radius:10px;margin-bottom:20px;max-width:400px;}
 #passwordDiv input{width:70%;padding:5px;}
 #passwordDiv button{padding:5px 10px;margin-left:5px;}
@@ -66,8 +66,8 @@ footer{background:#4a90e2;color:white;text-align:center;padding:15px;margin-top:
 <input type="text" id="newName">
 <label>Price:</label>
 <input type="number" id="newPrice">
-<label>Image URL:</label>
-<input type="text" id="newImage">
+<label>Upload Image:</label>
+<input type="file" id="newImageFile" accept="image/*">
 <button onclick="addProduct()">Add Product</button>
 <h4>Existing Products</h4>
 <div id="existingProducts"></div>
@@ -103,16 +103,16 @@ footer{background:#4a90e2;color:white;text-align:center;padding:15px;margin-top:
 </footer>
 
 <script>
-const adminPassword = "owner123"; // Change this password
+const adminPassword = "owner123"; // Change if needed
 let products = [];
 let cart = [];
 
 // GitHub details
-const githubUsername = "YOUR_GITHUB_USERNAME";
-const repoName = "YOUR_REPO_NAME";
+const githubUsername = "paramyadav1407-oss";
+const repoName = "Akshar-Stationary-And-General-Store";
 const filePath = "products.json";
 const branch = "main";
-const token = "YOUR_PERSONAL_ACCESS_TOKEN";
+const token = "YOUR_PERSONAL_ACCESS_TOKEN"; // Replace with your GitHub PAT
 
 // Load products from GitHub
 async function loadProducts() {
@@ -165,19 +165,28 @@ function renderAdminProducts(){
   });
 }
 
-// Add product via admin panel
+// Add product via admin panel with image upload
 function addProduct(){
-  const name=document.getElementById('newName').value;
-  const price=Number(document.getElementById('newPrice').value);
-  const image=document.getElementById('newImage').value;
-  if(!name||!price) return alert("Name and price required");
-  products.push({name, price, image});
-  renderProducts();
-  renderAdminProducts();
-  updateGitHubJSON();
-  document.getElementById('newName').value='';
-  document.getElementById('newPrice').value='';
-  document.getElementById('newImage').value='';
+  const name = document.getElementById('newName').value;
+  const price = Number(document.getElementById('newPrice').value);
+  const fileInput = document.getElementById('newImageFile');
+
+  if(!name || !price) return alert("Name and price required");
+  if(fileInput.files.length === 0) return alert("Please select an image");
+
+  const file = fileInput.files[0];
+  const reader = new FileReader();
+  reader.onloadend = async function(){
+      const imageBase64 = reader.result;
+      products.push({name, price, image: imageBase64});
+      renderProducts();
+      renderAdminProducts();
+      await updateGitHubJSON();
+      document.getElementById('newName').value='';
+      document.getElementById('newPrice').value='';
+      fileInput.value='';
+  };
+  reader.readAsDataURL(file);
 }
 
 // Remove product
@@ -222,14 +231,10 @@ function placeOrder(){
 async function updateGitHubJSON(){
   const apiURL = `https://api.github.com/repos/${githubUsername}/${repoName}/contents/${filePath}`;
   try {
-    // Get current SHA
-    const res = await fetch(apiURL, {
-      headers: { Authorization: `token ${token}` }
-    });
+    const res = await fetch(apiURL, { headers: { Authorization: `token ${token}` } });
     const data = await res.json();
     const sha = data.sha;
 
-    // Update file
     await fetch(apiURL, {
       method: "PUT",
       headers: {
