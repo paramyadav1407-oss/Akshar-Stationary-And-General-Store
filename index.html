@@ -27,7 +27,6 @@ footer{background:#4a90e2;color:white;text-align:center;padding:15px;margin-top:
 .cart h3{margin-top:0}
 .cart-item{display:flex;justify-content:space-between;margin-bottom:5px}
 .cart-item button{background:red;margin-left:10px}
-/* Password input box styling */
 #passwordDiv{background:#eee;padding:15px;border-radius:10px;margin-bottom:20px;max-width:400px;}
 #passwordDiv input{width:70%;padding:5px;}
 #passwordDiv button{padding:5px 10px;margin-left:5px;}
@@ -67,8 +66,8 @@ footer{background:#4a90e2;color:white;text-align:center;padding:15px;margin-top:
 <input type="text" id="prodName" placeholder="Enter product name">
 <label>Price (₹):</label>
 <input type="number" id="prodPrice" placeholder="Enter price">
-<label>Image URL (optional):</label>
-<input type="text" id="prodImage" placeholder="Enter image URL">
+<label>Upload Image (optional):</label>
+<input type="file" id="prodImage" accept="image/*">
 <button onclick="addProduct()">Add Product</button>
 </div>
 
@@ -142,13 +141,24 @@ function renderProducts(){
 function addProduct(){
   const name = document.getElementById('prodName').value;
   const price = parseFloat(document.getElementById('prodPrice').value);
-  const image = document.getElementById('prodImage').value;
+  const fileInput = document.getElementById('prodImage');
   if(!name || isNaN(price)){ alert("Enter valid name and price"); return; }
-  defaultProducts.push({name,price,image});
+
+  if(fileInput.files && fileInput.files[0]){
+    const reader = new FileReader();
+    reader.onload = function(e){
+      defaultProducts.push({name,price,image:e.target.result});
+      renderProducts();
+    }
+    reader.readAsDataURL(fileInput.files[0]);
+  } else {
+    defaultProducts.push({name,price,image:""});
+    renderProducts();
+  }
+
   document.getElementById('prodName').value='';
   document.getElementById('prodPrice').value='';
   document.getElementById('prodImage').value='';
-  renderProducts();
 }
 
 // Remove product (owner)
