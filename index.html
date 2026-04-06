@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Akshar Stationary and General Store</title>
   <style>
-    /* Basic Reset */
+    /* Reset & basic styling */
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: Arial, sans-serif; line-height: 1.6; background: #fdfdfd; color: #333; }
-    header { background: #4a90e2; color: white; padding: 20px 0; text-align: center; }
-    header h1 { font-size: 2rem; }
-    nav a { color: white; margin: 0 15px; text-decoration: none; font-weight: bold; }
+    body { font-family: Arial, sans-serif; background: #fdfdfd; color: #333; }
+    header { background: #4a90e2; color: white; padding: 20px; text-align: center; }
+    header h1 { font-size: 2rem; margin-bottom: 5px; }
+    nav a { color: white; margin: 0 10px; text-decoration: none; font-weight: bold; }
     nav a:hover { text-decoration: underline; }
     main { padding: 20px; max-width: 1200px; margin: auto; }
     .hero { text-align: center; margin-bottom: 30px; }
@@ -81,7 +81,7 @@
   <script>
     /*
       ======== SHOP OWNER INSTRUCTIONS ========
-      To add/remove products, edit the 'products' array below.
+      Only the shop owner should edit this array to add/remove products.
       Each product object has:
         - name: Product Name
         - price: Price in ₹
@@ -96,22 +96,27 @@
 
     const container = document.getElementById('products-container');
 
-    products.forEach(product => {
-      const div = document.createElement('div');
-      div.className = 'product';
-      div.innerHTML = `
-        <img src="${product.image}" alt="${product.name}">
-        <h3>${product.name}</h3>
-        <p>₹${product.price}</p>
-        <button onclick="orderWhatsApp('${product.name}')">Order on WhatsApp</button>
-      `;
-      container.appendChild(div);
-    });
+    function renderProducts() {
+      container.innerHTML = '';
+      products.forEach(product => {
+        const div = document.createElement('div');
+        div.className = 'product';
+        div.innerHTML = `
+          <img src="${product.image}" alt="${product.name}">
+          <h3>${product.name}</h3>
+          <p>₹${product.price}</p>
+          <button onclick="orderWhatsApp('${product.name}')">Order on WhatsApp</button>
+        `;
+        container.appendChild(div);
+      });
+    }
 
     function orderWhatsApp(productName){
       const message = encodeURIComponent(`Hi, I want to order ${productName} from Akshar Stationary and General Store`);
       window.open(`https://wa.me/919998083939?text=${message}`, '_blank');
     }
+
+    renderProducts();
   </script>
 </body>
 </html>
