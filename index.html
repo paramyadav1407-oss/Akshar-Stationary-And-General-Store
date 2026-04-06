@@ -5,18 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Akshar Stationary and General Store</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #fdfdfd; color: #333; margin:0; padding:0; }
-    header { background: #4a90e2; color: white; padding: 20px; text-align: center; }
-    header h1 { font-size: 2rem; margin-bottom:5px; }
+    body { font-family: Arial, sans-serif; margin:0; padding:0; background:#fdfdfd; color:#333; }
+    header { background:#4a90e2; color:white; padding:20px; text-align:center; }
+    header h1 { margin-bottom:5px; }
     nav a { color:white; margin:0 10px; text-decoration:none; font-weight:bold; }
     nav a:hover { text-decoration: underline; }
     main { padding:20px; max-width:1200px; margin:auto; }
     h2 { margin:20px 0; color:#4a90e2; }
-    table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
-    th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
-    th { background: #4a90e2; color: white; }
+    table { width:100%; border-collapse: collapse; margin-bottom:30px; }
+    th, td { border:1px solid #ddd; padding:10px; text-align:center; }
+    th { background:#4a90e2; color:white; }
     button { background:#25d366; color:white; border:none; padding:8px 12px; border-radius:5px; cursor:pointer; }
     button:hover { background:#1ebe57; }
+    .admin-section { display:none; margin-bottom:30px; background:#eee; padding:15px; border-radius:10px; }
+    input[type=text], input[type=number] { padding:5px; width:150px; }
     .about, .contact { margin:30px 0; }
     footer { background:#4a90e2; color:white; text-align:center; padding:15px; margin-top:30px; }
   </style>
@@ -41,41 +43,30 @@
 
     <section id="products">
       <h2>Our Products</h2>
-      <!-- SHOP OWNER: Add products here manually -->
+
+      <!-- Admin Panel -->
+      <div class="admin-section" id="admin">
+        <h3>Admin Panel (Owner Only)</h3>
+        <p>Add a new product:</p>
+        <input type="text" id="prodName" placeholder="Product Name">
+        <input type="number" id="prodPrice" placeholder="Price ₹">
+        <input type="text" id="prodImage" placeholder="Image URL (optional)">
+        <button onclick="addProduct()">Add Product</button>
+      </div>
+
+      <!-- Product Table -->
       <table>
         <thead>
           <tr>
             <th>Product Name</th>
             <th>Price (₹)</th>
-            <th>Image URL (optional)</th>
+            <th>Image URL</th>
             <th>Order</th>
+            <th class="admin-col">Remove (Admin)</th>
           </tr>
         </thead>
-        <tbody>
-          <tr>
-            <td>Notebook</td>
-            <td>50</td>
-            <td></td>
-            <td><button onclick="orderWhatsApp('Notebook')">Order on WhatsApp</button></td>
-          </tr>
-          <tr>
-            <td>Ball Pen</td>
-            <td>15</td>
-            <td></td>
-            <td><button onclick="orderWhatsApp('Ball Pen')">Order on WhatsApp</button></td>
-          </tr>
-          <tr>
-            <td>Pencil</td>
-            <td>10</td>
-            <td></td>
-            <td><button onclick="orderWhatsApp('Pencil')">Order on WhatsApp</button></td>
-          </tr>
-          <tr>
-            <td>Eraser</td>
-            <td>5</td>
-            <td></td>
-            <td><button onclick="orderWhatsApp('Eraser')">Order on WhatsApp</button></td>
-          </tr>
+        <tbody id="productTable">
+          <!-- Products will appear here -->
         </tbody>
       </table>
     </section>
@@ -98,10 +89,77 @@
   </footer>
 
   <script>
+    // Password to unlock admin
+    const adminPassword = "owner123"; // change to your password
+
+    // Initial products
+    let products = [
+      { name:"Notebook", price:50, image:"" },
+      { name:"Ball Pen", price:15, image:"" },
+      { name:"Pencil", price:10, image:"" },
+      { name:"Eraser", price:5, image:"" }
+    ];
+
+    // Check for admin password
+    function checkAdmin() {
+      const pass = prompt("Enter admin password to unlock admin panel:");
+      if(pass === adminPassword) {
+        document.getElementById('admin').style.display = 'block';
+        renderProducts();
+      } else {
+        alert("Incorrect password! Admin panel locked.");
+        renderProducts(); // still render for customers
+      }
+    }
+
+    function renderProducts() {
+      const table = document.getElementById('productTable');
+      table.innerHTML = '';
+      products.forEach((p, index) => {
+        const row = document.createElement('tr');
+
+        row.innerHTML = `
+          <td>${p.name}</td>
+          <td>${p.price}</td>
+          <td>${p.image ? p.image : ""}</td>
+          <td><button onclick="orderWhatsApp('${p.name}')">Order on WhatsApp</button></td>
+          <td class="admin-col">${document.getElementById('admin').style.display==='block' ? `<button onclick="removeProduct(${index})">Remove</button>` : ""}</td>
+        `;
+        table.appendChild(row);
+      });
+    }
+
+    function addProduct() {
+      const name = document.getElementById('prodName').value;
+      const price = parseFloat(document.getElementById('prodPrice').value);
+      const image = document.getElementById('prodImage').value;
+
+      if(!name || isNaN(price)) {
+        alert("Enter valid name and price!");
+        return;
+      }
+
+      products.push({ name, price, image });
+      document.getElementById('prodName').value = '';
+      document.getElementById('prodPrice').value = '';
+      document.getElementById('prodImage').value = '';
+      renderProducts();
+    }
+
+    function removeProduct(index) {
+      if(confirm("Remove this product?")) {
+        products.splice(index,1);
+        renderProducts();
+      }
+    }
+
     function orderWhatsApp(productName) {
       const message = encodeURIComponent(`Hi, I want to order ${productName} from Akshar Stationary and General Store`);
       window.open(`https://wa.me/919998083939?text=${message}`, '_blank');
     }
+
+    // Run on page load
+    window.onload = checkAdmin;
   </script>
 </body>
 </html>
