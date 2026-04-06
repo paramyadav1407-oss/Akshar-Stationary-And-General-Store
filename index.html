@@ -106,6 +106,15 @@ const adminPassword = "owner123";
 let defaultProducts = [];
 let cart = [];
 
+// Load saved products from localStorage
+window.onload = function(){
+  const savedProducts = localStorage.getItem('products');
+  if(savedProducts){
+    defaultProducts = JSON.parse(savedProducts);
+  }
+  renderProducts();
+}
+
 // Unlock admin panel from visible input
 function unlockAdmin(){
   const pass = document.getElementById('passwordInput').value;
@@ -148,11 +157,13 @@ function addProduct(){
     const reader = new FileReader();
     reader.onload = function(e){
       defaultProducts.push({name,price,image:e.target.result});
+      localStorage.setItem('products', JSON.stringify(defaultProducts)); // save to localStorage
       renderProducts();
     }
     reader.readAsDataURL(fileInput.files[0]);
   } else {
     defaultProducts.push({name,price,image:""});
+    localStorage.setItem('products', JSON.stringify(defaultProducts)); // save to localStorage
     renderProducts();
   }
 
@@ -165,6 +176,7 @@ function addProduct(){
 function removeProduct(index){
   if(confirm("Remove this product?")){
     defaultProducts.splice(index,1);
+    localStorage.setItem('products', JSON.stringify(defaultProducts)); // update localStorage
     renderProducts();
   }
 }
