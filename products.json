@@ -1,17 +1,1 @@
-[
-  {
-    "name": "Notebook",
-    "price": 50,
-    "image": "https://example.com/notebook.jpg"
-  },
-  {
-    "name": "Pen",
-    "price": 10,
-    "image": "https://example.com/pen.jpg"
-  },
-  {
-    "name": "Eraser",
-    "price": 5,
-    "image": "https://example.com/eraser.jpg"
-  }
-]
+[]
