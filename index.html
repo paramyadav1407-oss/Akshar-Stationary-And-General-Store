@@ -45,7 +45,7 @@ footer{background:#4a90e2;color:white;text-align:center;padding:15px;margin-top:
 
 <section id="about" class="about">
 <h2>About Us</h2>
-<p>Akshar Stationary and General Store has been serving quality stationery to students and offices in Ahmedabad. We offer a wide range of notebooks, pens, pencils, art supplies, and more. Our mission is to provide reliable products with excellent service.</p>
+<p>Akshar Stationary and General Store has been serving quality stationery to students and offices in Ahmedabad. We offer a wide range of products. Our mission is to provide reliable products with excellent service.</p>
 </section>
 
 <section id="contact" class="contact">
@@ -60,13 +60,12 @@ footer{background:#4a90e2;color:white;text-align:center;padding:15px;margin-top:
 </footer>
 
 <script>
-let isOwner = false; // set true for owner to enable Remove buttons
+// Set true for owner to enable Remove buttons
+let isOwner = true; 
 
+// Empty array - owner adds products manually here
 let defaultProducts = [
-{name:"Notebook",price:50,category:"Stationery",image:""},
-{name:"Ball Pen",price:15,category:"Stationery",image:""},
-{name:"Pencil",price:10,category:"Stationery",image:""},
-{name:"Eraser",price:5,category:"Stationery",image:""}
+  // Example: {name:"Notebook", price:50, image:"image_url_here"}
 ];
 
 function renderProducts(){
@@ -79,7 +78,6 @@ function renderProducts(){
       <img src="${p.image?p.image:""}" alt="${p.name}">
       <h3>${p.name}</h3>
       <p>₹${p.price}</p>
-      <p>${p.category}</p>
       ${isOwner?`<button onclick="removeProduct(${i})">Remove</button>`:""}
       <button onclick="orderProduct('${p.name}',${p.price})">Order</button>
     `;
@@ -99,6 +97,7 @@ function orderProduct(name,price){
   window.open(`https://wa.me/919998083939?text=${message}`,'_blank');
 }
 
+// Initial render
 window.onload = renderProducts;
 </script>
 </body>
